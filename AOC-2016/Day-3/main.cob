@@ -18,13 +18,13 @@
        WORKING-STORAGE SECTION.
 
        01 FILE-STATUS PIC XX.
-       01 TRIANGLE.
-           05 SIDE-A PIC 9(3).
-           05 SIDE-B PIC 9(3).
-           05 SIDE-C PIC 9(3).
+       01 TRIANGLES.
+           05 TRIANGLE-ROW OCCURS 3 TIMES.
+               10 TRIANGLE-COL OCCURS 3 TIMES PIC 9(3).
+       01 ROW-COUNT PIC 9 VALUE 1.
+       01 COL-COUNT PIC 9 VALUE 1.
 
        01 VALID-TRIANGLES PIC 9(4) VALUE 0.
-       01 FIELD-COUNT PIC 9 VALUE 0.
 
        PROCEDURE DIVISION.
 
@@ -38,19 +38,29 @@
                        NOT AT END
                            UNSTRING FUNCTION TRIM(FILE-LINE)
                                DELIMITED BY ALL SPACE
-                               INTO SIDE-A SIDE-B SIDE-C
-                               TALLYING IN FIELD-COUNT
+                               INTO TRIANGLE-COL(ROW-COUNT, 1)
+                                    TRIANGLE-COL(ROW-COUNT, 2)
+                                    TRIANGLE-COL(ROW-COUNT, 3)
                            END-UNSTRING
 
-                           DISPLAY "STATUS: " FILE-STATUS
-                           DISPLAY "[" SIDE-A "]"
-                           DISPLAY "[" SIDE-B "]"
-                           DISPLAY "[" SIDE-C "]"
+                           ADD 1 TO ROW-COUNT
 
-                           IF  SIDE-A + SIDE-B > SIDE-C 
-                           AND SIDE-A + SIDE-C > SIDE-B
-                           AND SIDE-B + SIDE-C > SIDE-A
-                               ADD 1 TO VALID-TRIANGLES
+                           IF ROW-COUNT > 3
+                               PERFORM VARYING COL-COUNT FROM 1 BY 1
+                               UNTIL COL-COUNT > 3
+                                   IF  TRIANGLE-COL(1, COL-COUNT)
+                                     + TRIANGLE-COL(2, COL-COUNT)
+                                     > TRIANGLE-COL(3, COL-COUNT)
+                                   AND TRIANGLE-COL(1, COL-COUNT)
+                                     + TRIANGLE-COL(3, COL-COUNT)
+                                     > TRIANGLE-COL(2, COL-COUNT)
+                                   AND TRIANGLE-COL(2, COL-COUNT)
+                                     + TRIANGLE-COL(3, COL-COUNT)
+                                     > TRIANGLE-COL(1, COL-COUNT)
+                                       ADD 1 TO VALID-TRIANGLES
+                                   END-IF                                   
+                               END-PERFORM
+                               MOVE 1 TO ROW-COUNT
                            END-IF
                    END-READ
                END-PERFORM
